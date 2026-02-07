@@ -10,7 +10,7 @@ import {
   shareConversation,
   unshareConversation,
   getSharedConversation,
-} from "../controllers/control.js";
+} from "../controllers/conversationController.js"; // ✅ CORRECT
 import { protect } from "../middleware/auth.js";
 
 const router = express.Router();

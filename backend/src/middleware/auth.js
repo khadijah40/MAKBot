@@ -1,62 +1,89 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import express from "express";
+import jwt from "jsonwebtoken";
+import {
+  register,
+  login,
+  googleAuth,
+  getMe,
+  updateProfile,
+  changePassword,
+  logout,
+  deleteAccount,
+} from "../controllers/authController.js";
+import { protect } from "../middleware/auth.js";
+import {
+  registerValidation,
+  loginValidation,
+  updateProfileValidation,
+  changePasswordValidation,
+  validate,
+} from "../middleware/validation.js";
+import User from "../models/User.js";
 
-// Protect routes - verify JWT token
-export const protect = async (req, res, next) => {
-  let token;
+const router = express.Router();
 
-  // Check for token in headers or cookies
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    // Get token from Bearer header
-    token = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies.token) {
-    // Get token from cookie
-    token = req.cookies.token;
-  }
+// Public routes
+router.post("/signup", registerValidation, validate, register); // Changed from /register to /signup
+router.post("/login", loginValidation, validate, login);
+router.post("/google", googleAuth);
 
-  // Make sure token exists
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      error: 'Not authorized to access this route',
-    });
-  }
-
+// Token verification
+router.get("/verify", async (req, res) => {
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = req.headers.authorization?.split(" ")[1];
 
-    // Get user from token
-    req.user = await User.findById(decoded.id).select('-password');
-
-    if (!req.user) {
+    if (!token) {
       return res.status(401).json({
         success: false,
-        error: 'User not found',
+        message: "No token provided",
       });
     }
 
-    next();
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (error) {
-    return res.status(401).json({
+    console.error("Verify error:", error);
+    res.status(401).json({
       success: false,
-      error: 'Not authorized to access this route',
+      message: "Invalid or expired token",
     });
   }
-};
+});
 
-// Grant access to specific roles
-export const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        error: `User role '${req.user.role}' is not authorized to access this route`,
-      });
-    }
-    next();
-  };
-};
+// Protected routes (require authentication)
+router.get("/me", protect, getMe);
+router.put(
+  "/profile",
+  protect,
+  updateProfileValidation,
+  validate,
+  updateProfile,
+);
+router.put(
+  "/change-password",
+  protect,
+  changePasswordValidation,
+  validate,
+  changePassword,
+);
+router.get("/logout", protect, logout);
+router.delete("/account", protect, deleteAccount);
+
+export default router;
