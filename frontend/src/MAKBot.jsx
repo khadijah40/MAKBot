@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import SignUp from "./Signup";
 import Login from "./Login";
 import ShareModal from "./ShareModal";
-import Settings from "./Settings";
 import { useNavigate } from "react-router-dom";
 
 const MAKBot = () => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -66,7 +66,7 @@ const MAKBot = () => {
   const loadConversations = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/conversations", {
+      const response = await fetch(`${API_URL}/api/conversations`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -86,7 +86,7 @@ const MAKBot = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/conversations/${conversationId}`,
+        `${API_URL}/api/conversations/${conversationId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -160,20 +160,17 @@ const MAKBot = () => {
     try {
       // If no active conversation, create a new one
       if (!activeConversationId) {
-        const createResponse = await fetch(
-          "http://localhost:5000/api/conversations",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              title: message.slice(0, 40) + (message.length > 40 ? "..." : ""),
-              personality: "general",
-            }),
+        const createResponse = await fetch(`${API_URL}/api/conversations`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        );
+          body: JSON.stringify({
+            title: message.slice(0, 40) + (message.length > 40 ? "..." : ""),
+            personality: "general",
+          }),
+        });
 
         const createData = await createResponse.json();
         if (createData.success) {
@@ -197,7 +194,7 @@ const MAKBot = () => {
       // Save user message to database
       if (activeConversationId) {
         await fetch(
-          `http://localhost:5000/api/conversations/${activeConversationId}/messages`,
+          `${API_URL}/api/conversations/${activeConversationId}/messages`,
           {
             method: "POST",
             headers: {
@@ -210,24 +207,21 @@ const MAKBot = () => {
       }
 
       // Call Cerebras AI API
-      const chatResponse = await fetch(
-        "http://localhost:5000/api/chat/message",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            message,
-            personality: "general",
-            conversationHistory: messages.map((msg) => ({
-              role: msg.sender === "user" ? "user" : "assistant",
-              content: msg.text,
-            })),
-          }),
+      const chatResponse = await fetch(`${API_URL}/api/chat/message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({
+          message,
+          personality: "general",
+          conversationHistory: messages.map((msg) => ({
+            role: msg.sender === "user" ? "user" : "assistant",
+            content: msg.text,
+          })),
+        }),
+      });
 
       const chatData = await chatResponse.json();
 
@@ -244,7 +238,7 @@ const MAKBot = () => {
       // Save AI response to database
       if (activeConversationId) {
         await fetch(
-          `http://localhost:5000/api/conversations/${activeConversationId}/messages`,
+          `${API_URL}/api/conversations/${activeConversationId}/messages`,
           {
             method: "POST",
             headers: {
@@ -288,7 +282,7 @@ const MAKBot = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/conversations/${conversationId}`,
+        `${API_URL}/api/conversations/${conversationId}`, // Changed from http://localhost:5000
         {
           method: "DELETE",
           headers: {
@@ -316,7 +310,7 @@ const MAKBot = () => {
 
     if (token) {
       try {
-        await fetch("http://localhost:5000/api/auth/logout", {
+        await fetch(`${API_URL}/api/auth/logout`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

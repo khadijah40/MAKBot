@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 
 const SignUp = ({ onClose, onSignupSuccess, onSwitchToLogin }) => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,16 +26,12 @@ const SignUp = ({ onClose, onSignupSuccess, onSwitchToLogin }) => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
+        body: JSON.stringify(formData), // Fixed: use formData instead of individual variables
       });
 
       const data = await response.json();
@@ -73,7 +70,8 @@ const SignUp = ({ onClose, onSignupSuccess, onSwitchToLogin }) => {
 
     try {
       // Send the Google token to your backend
-      const response = await fetch("http://localhost:5000/api/auth/google", {
+      const response = await fetch(`${API_URL}/api/auth/google`, {
+        // Fixed: use API_URL
         method: "POST",
         headers: {
           "Content-Type": "application/json",
