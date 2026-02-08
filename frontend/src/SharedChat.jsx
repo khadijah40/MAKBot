@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+// Use environment variable for API URL (Vercel compatible)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const SharedChat = () => {
   const { shareToken } = useParams();
   const navigate = useNavigate();
@@ -15,7 +18,7 @@ const SharedChat = () => {
   const loadSharedChat = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/chat/shared/${shareToken}`,
+        `${API_URL}/api/chat/shared/${shareToken}`,
       );
 
       const data = await response.json();
@@ -26,6 +29,7 @@ const SharedChat = () => {
         setError(data.error || "Failed to load shared chat");
       }
     } catch (err) {
+      console.error("Error loading shared chat:", err);
       setError("Failed to load shared chat");
     } finally {
       setLoading(false);
@@ -39,6 +43,12 @@ const SharedChat = () => {
           <div style={styles.spinner}></div>
           <p>Loading shared chat...</p>
         </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }

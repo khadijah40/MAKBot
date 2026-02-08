@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 
+// Use environment variable for API URL (Vercel compatible)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const ShareModal = ({ conversationId, onClose }) => {
   const [shareUrl, setShareUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,7 +16,7 @@ const ShareModal = ({ conversationId, onClose }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/chat/${conversationId}/share`,
+        `${API_URL}/api/chat/${conversationId}/share`,
         {
           method: "POST",
           headers: {
@@ -25,11 +28,15 @@ const ShareModal = ({ conversationId, onClose }) => {
       const data = await response.json();
 
       if (data.success) {
-        setShareUrl(data.shareUrl);
+        // Build full share URL with frontend domain
+        const frontendUrl = window.location.origin;
+        const fullShareUrl = `${frontendUrl}/shared/${data.shareToken}`;
+        setShareUrl(fullShareUrl);
       } else {
         setError("Failed to create share link");
       }
     } catch (err) {
+      console.error("Share error:", err);
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -45,14 +52,16 @@ const ShareModal = ({ conversationId, onClose }) => {
   const handleUnshare = async () => {
     try {
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/chat/${conversationId}/share`, {
+      await fetch(`${API_URL}/api/chat/${conversationId}/share`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setShareUrl("");
+      onClose(); // Close modal after unsharing
     } catch (err) {
+      console.error("Unshare error:", err);
       setError("Failed to unshare");
     }
   };
@@ -114,6 +123,7 @@ const ShareModal = ({ conversationId, onClose }) => {
                   value={shareUrl}
                   readOnly
                   style={styles.linkInput}
+                  onClick={(e) => e.target.select()}
                 />
                 <button style={styles.copyBtn} onClick={copyToClipboard}>
                   {copied ? (
@@ -173,6 +183,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2000,
+    animation: "fadeIn 0.2s ease",
   },
   modal: {
     background: "#fefdfb",
@@ -181,6 +192,7 @@ const styles = {
     width: "90%",
     boxShadow: "0 20px 60px rgba(61, 55, 49, 0.3)",
     position: "relative",
+    animation: "slideUp 0.3s ease",
   },
   closeBtn: {
     position: "absolute",
@@ -195,6 +207,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    transition: "all 0.2s",
   },
   closeSvg: {
     width: "20px",
@@ -263,6 +276,7 @@ const styles = {
     fontSize: "14px",
     color: "#3d3731",
     fontFamily: "monospace",
+    cursor: "pointer",
   },
   copyBtn: {
     padding: "12px 20px",
@@ -277,6 +291,7 @@ const styles = {
     alignItems: "center",
     gap: "8px",
     whiteSpace: "nowrap",
+    transition: "all 0.2s",
   },
   btnIcon: {
     width: "18px",
@@ -292,6 +307,7 @@ const styles = {
     fontSize: "14px",
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s",
   },
 };
 

@@ -4,6 +4,8 @@ import Login from "./Login";
 import ShareModal from "./ShareModal";
 import { Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const MAKBot = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -158,7 +160,7 @@ const MAKBot = () => {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/chat/all", {
+      const response = await fetch(`${API_URL}/api/chat/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -186,7 +188,7 @@ const MAKBot = () => {
   const loadChat = async (chatId) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/chat/${chatId}`, {
+      const response = await fetch(`${API_URL}/api/chat/${chatId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -218,7 +220,7 @@ const MAKBot = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/chat/${chatId}`, {
+      const response = await fetch(`${API_URL}/api/chat/${chatId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -286,7 +288,7 @@ const MAKBot = () => {
     if (!chatId) {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:5000/api/chat/create", {
+        const response = await fetch(`${API_URL}/api/chat/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -312,7 +314,7 @@ const MAKBot = () => {
     } else {
       try {
         const token = localStorage.getItem("token");
-        await fetch(`http://localhost:5000/api/chat/${chatId}/message`, {
+        await fetch(`${API_URL}/api/chat/${chatId}/message`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -335,7 +337,7 @@ const MAKBot = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/ai/chat", {
+      const response = await fetch(`${API_URL}/api/ai/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -362,7 +364,7 @@ const MAKBot = () => {
         if (chatId) {
           try {
             const token = localStorage.getItem("token");
-            await fetch(`http://localhost:5000/api/chat/${chatId}/message`, {
+            await fetch(`${API_URL}/api/chat/${chatId}/message`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Login = ({ onClose, onLoginSuccess, onSwitchToSignup }) => {
   const [formData, setFormData] = useState({
     email: "",
@@ -23,7 +25,7 @@ const Login = ({ onClose, onLoginSuccess, onSwitchToSignup }) => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

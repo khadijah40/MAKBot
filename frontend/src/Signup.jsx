@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const SignUp = ({ onClose, onSignupSuccess, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -24,7 +26,7 @@ const SignUp = ({ onClose, onSignupSuccess, onSwitchToLogin }) => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -63,7 +65,7 @@ const SignUp = ({ onClose, onSignupSuccess, onSwitchToLogin }) => {
 
   const handleGoogleSignIn = () => {
     // Redirect to backend Google OAuth route
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = `${API_URL}/api/auth/google`;
   };
 
   const handleLoginClick = () => {
