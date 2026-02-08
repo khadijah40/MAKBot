@@ -46,7 +46,6 @@ const Settings = () => {
       return;
     }
 
-    // Clear from localStorage
     localStorage.removeItem("chatHistory");
     alert("Chat history cleared successfully!");
   };
@@ -140,15 +139,23 @@ const Settings = () => {
           <h2 style={styles.sectionTitle}>Account</h2>
 
           <div style={styles.card}>
-            <div style={styles.infoRow}>
-              <span style={styles.label}>Email</span>
-              <span style={styles.value}>{user.email}</span>
+            <div style={styles.infoRow} className="info-row">
+              <span style={styles.label} className="info-label">
+                Email
+              </span>
+              <span style={styles.value} className="info-value">
+                {user.email}
+              </span>
             </div>
 
-            <div style={styles.infoRow}>
-              <span style={styles.label}>Member Since</span>
-              <span style={styles.value}>
-                {new Date(user.createdAt).toLocaleDateString()}
+            <div style={styles.infoRow} className="info-row">
+              <span style={styles.label} className="info-label">
+                Member Since
+              </span>
+              <span style={styles.value} className="info-value">
+                {user.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString()
+                  : "N/A"}
               </span>
             </div>
 
@@ -274,6 +281,28 @@ const Settings = () => {
           </div>
         </div>
       )}
+
+      {/* Mobile Responsive Styles */}
+      <style>{`
+        @media (max-width: 600px) {
+          .info-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 4px !important;
+          }
+          
+          .info-value {
+            text-align: left !important;
+            font-size: 13px !important;
+            word-break: break-all !important;
+          }
+          
+          .info-label {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -324,16 +353,27 @@ const styles = {
   infoRow: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "flex-start",
     padding: "12px 0",
     borderBottom: "1px solid #f0ede8",
+    gap: "12px",
+    flexWrap: "wrap",
   },
   label: {
     color: "#8a8278",
     fontSize: "14px",
+    minWidth: "100px",
+    flexShrink: 0,
   },
   value: {
     color: "#3d3731",
     fontWeight: "500",
+    fontSize: "14px",
+    wordBreak: "break-word",
+    overflowWrap: "break-word",
+    textAlign: "right",
+    flex: 1,
+    maxWidth: "100%",
   },
   button: {
     width: "100%",

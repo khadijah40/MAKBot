@@ -13,7 +13,7 @@ const ShareModal = ({ conversationId, onClose }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/conversations/${conversationId}/share`,
+        `http://localhost:5000/api/chat/${conversationId}/share`,
         {
           method: "POST",
           headers: {
@@ -45,15 +45,12 @@ const ShareModal = ({ conversationId, onClose }) => {
   const handleUnshare = async () => {
     try {
       const token = localStorage.getItem("token");
-      await fetch(
-        `http://localhost:5000/api/conversations/${conversationId}/share`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      await fetch(`http://localhost:5000/api/chat/${conversationId}/share`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       setShareUrl("");
     } catch (err) {
       setError("Failed to unshare");

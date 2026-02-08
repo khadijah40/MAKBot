@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
 
 const Login = ({ onClose, onLoginSuccess, onSwitchToSignup }) => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -25,32 +23,30 @@ const Login = ({ onClose, onLoginSuccess, onSwitchToSignup }) => {
     setError("");
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Save token to localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
         console.log("User logged in successfully:", data.user);
 
-        // Call success callback to update parent component
         if (onLoginSuccess) {
           onLoginSuccess(data.user);
         }
 
-        // Trigger auth-change event
         window.dispatchEvent(new Event("auth-change"));
-
-        // Close modal
         onClose();
       } else {
         setError(data.error || "Login failed");
@@ -61,57 +57,6 @@ const Login = ({ onClose, onLoginSuccess, onSwitchToSignup }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setLoading(true);
-    setError("");
-
-    try {
-      // Send the Google token to your backend
-      const response = await fetch("http://localhost:5000/api/auth/google", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: credentialResponse.credential,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Save token to localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        console.log("Google sign-in successful:", data.user);
-
-        // Call success callback to update parent component
-        if (onLoginSuccess) {
-          onLoginSuccess(data.user);
-        }
-
-        // Trigger auth-change event
-        window.dispatchEvent(new Event("auth-change"));
-
-        // Close modal
-        onClose();
-      } else {
-        setError(data.error || "Google sign-in failed");
-      }
-    } catch (error) {
-      console.error("Google sign-in error:", error);
-      setError("Network error. Please check if the backend is running.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    console.error("Google sign-in failed");
-    setError("Google sign-in failed. Please try again.");
   };
 
   const handleSignupClick = () => {
@@ -160,26 +105,6 @@ const Login = ({ onClose, onLoginSuccess, onSwitchToSignup }) => {
               {error}
             </div>
           )}
-
-          {/* Google Login Button */}
-          <div style={styles.googleBtnWrapper}>
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-              theme="outline"
-              size="large"
-              text="continue_with"
-              shape="rectangular"
-              width="100%"
-            />
-          </div>
-
-          <div style={styles.divider}>
-            <div style={styles.dividerLine}></div>
-            <span style={styles.dividerText}>or</span>
-            <div style={styles.dividerLine}></div>
-          </div>
 
           <form style={styles.form} onSubmit={handleSubmit}>
             <div style={styles.formGroup}>
@@ -349,28 +274,6 @@ const styles = {
     width: "20px",
     height: "20px",
     flexShrink: 0,
-  },
-  googleBtnWrapper: {
-    width: "100%",
-    display: "flex",
-    justifyContent: "center",
-  },
-  divider: {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    margin: "28px 0",
-  },
-  dividerLine: {
-    flex: 1,
-    height: "1px",
-    background: "#ebe8e3",
-  },
-  dividerText: {
-    fontSize: "13px",
-    color: "#a39a8f",
-    fontWeight: 500,
   },
   form: {
     width: "100%",
