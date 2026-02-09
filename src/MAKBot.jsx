@@ -1025,9 +1025,11 @@ const styles = {
   appContainer: {
     display: "flex",
     height: "100vh",
+    height: "100dvh", // Better mobile support
     position: "relative",
     background: "#f7f5f2",
     color: "#3d3731",
+    overflow: "hidden",
   },
   sidebar: {
     width: "280px",
@@ -1185,8 +1187,8 @@ const styles = {
     flexDirection: "column",
     background: "#f7f5f2",
     position: "relative",
-    height: "100vh", // Add this
-    overflow: "hidden", // Add this
+    height: "100%",
+    overflow: "hidden",
   },
   chatHeader: {
     padding: "20px 32px",
@@ -1196,6 +1198,7 @@ const styles = {
     alignItems: "center",
     gap: "16px",
     justifyContent: "space-between",
+    flexShrink: 0,
   },
   chatHeaderLeft: {
     display: "flex",
@@ -1396,11 +1399,12 @@ const styles = {
   chatMessages: {
     flex: 1,
     overflowY: "auto",
+    overflowX: "hidden",
     padding: "32px",
     display: "flex",
     flexDirection: "column",
     gap: "24px",
-    overflowX: "hidden", // Add this
+    WebkitOverflowScrolling: "touch",
   },
   emptyState: {
     flex: 1,
@@ -1528,17 +1532,16 @@ const styles = {
     borderBottomLeftRadius: "4px",
   },
   chatInputContainer: {
-    padding: "24px 32px",
+    padding: "16px",
     borderTop: "1px solid rgba(61, 55, 49, 0.1)",
     background: "#fefdfb",
-    position: "sticky",
-    bottom: 0,
-    zIndex: 10,
+    flexShrink: 0,
   },
   chatInputWrapper: {
     maxWidth: "1000px",
     margin: "0 auto",
     position: "relative",
+    width: "100%",
   },
   chatInput: {
     width: "100%",
@@ -1547,13 +1550,14 @@ const styles = {
     border: "1px solid rgba(61, 55, 49, 0.1)",
     borderRadius: "16px",
     color: "#3d3731",
-    fontSize: "15px",
+    fontSize: "16px",
     fontFamily: "inherit",
     resize: "none",
     outline: "none",
     transition: "all 0.3s ease",
     minHeight: "56px",
     maxHeight: "200px",
+    boxSizing: "border-box",
   },
   sendButton: {
     position: "absolute",
