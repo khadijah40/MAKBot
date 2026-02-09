@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import SignUp from "./Signup";
 import Login from "./Login";
+import ShareModal from "./ShareModal";
+import { Link } from "react-router-dom";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const MAKBot = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -9,8 +13,15 @@ const MAKBot = () => {
   const [showEmptyState, setShowEmptyState] = useState(true);
   const [showSignUp, setShowSignUp] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareConversationId, setShareConversationId] = useState(null);
   const messageInputRef = useRef(null);
   const chatMessagesRef = useRef(null);
+
+  // Chat history state
+  const [chatHistory, setChatHistory] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -44,19 +55,57 @@ const MAKBot = () => {
 
   // Check if user is logged in
   const checkAuth = () => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+    try {
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
 
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-    } else {
+      if (token && userData) {
+        setUser(JSON.parse(userData));
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Auth check error:", error);
       setUser(null);
     }
   };
 
-  // Check auth on component mount
+  // Check auth on component mount and listen for Google OAuth callback
   useEffect(() => {
     checkAuth();
+
+    try {
+      // Handle Google OAuth callback
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const userParam = params.get("user");
+
+      if (token && userParam) {
+        try {
+          const userData = JSON.parse(decodeURIComponent(userParam));
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(userData));
+          setUser(userData);
+
+          // Clear URL parameters
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname,
+          );
+
+          // Close any open modals
+          setShowSignUp(false);
+          setShowLogin(false);
+
+          window.dispatchEvent(new Event("auth-change"));
+        } catch (error) {
+          console.error("Error parsing Google auth data:", error);
+        }
+      }
+    } catch (error) {
+      console.error("OAuth callback error:", error);
+    }
 
     const handleAuthChange = () => {
       checkAuth();
@@ -68,6 +117,13 @@ const MAKBot = () => {
       window.removeEventListener("auth-change", handleAuthChange);
     };
   }, []);
+
+  // Load chat history when user logs in
+  useEffect(() => {
+    if (user) {
+      loadChatHistory();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -81,8 +137,10 @@ const MAKBot = () => {
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
+    if (e.target) {
+      e.target.style.height = "auto";
+      e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -92,11 +150,123 @@ const MAKBot = () => {
     }
   };
 
+  // Load chat history from backend
+  const loadChatHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoadingHistory(false);
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/chat/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch chats");
+      }
+
+      const data = await response.json();
+      if (data.success && Array.isArray(data.chats)) {
+        setChatHistory(data.chats);
+      } else {
+        setChatHistory([]);
+      }
+    } catch (error) {
+      console.error("Error loading chat history:", error);
+      setChatHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // Load specific chat
+  const loadChat = async (chatId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/chat/${chatId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load chat");
+      }
+
+      const data = await response.json();
+      if (data.success && data.chat) {
+        setMessages(data.chat.messages || []);
+        setCurrentChatId(chatId);
+        setShowEmptyState(false);
+        setSidebarOpen(false);
+      }
+    } catch (error) {
+      console.error("Error loading chat:", error);
+    }
+  };
+
+  // Delete chat
+  const deleteChat = async (chatId, e) => {
+    e.stopPropagation();
+
+    if (!window.confirm("Are you sure you want to delete this chat?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/chat/${chatId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete chat");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        if (chatId === currentChatId) {
+          createNewChat();
+        }
+        loadChatHistory();
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
+  };
+
+  // Format chat time (e.g., "5m ago", "2h ago")
+  const formatChatTime = (date) => {
+    try {
+      const chatDate = new Date(date);
+      const now = new Date();
+      const diffMs = now - chatDate;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return chatDate.toLocaleDateString();
+    } catch (error) {
+      return "Recently";
+    }
+  };
+
   const sendMessage = async () => {
     const message = inputValue.trim();
     if (!message) return;
 
-    // Check if user is logged in
     if (!user) {
       alert("Please sign up or log in to use the chat");
       setShowSignUp(true);
@@ -105,34 +275,139 @@ const MAKBot = () => {
 
     setShowEmptyState(false);
 
-    // Add user message to UI immediately
     const userMessage = { text: message, sender: "user" };
     setMessages((prev) => [...prev, userMessage]);
 
-    // Clear input
     setInputValue("");
     if (messageInputRef.current) {
       messageInputRef.current.style.height = "auto";
     }
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = {
-        text: "This is a demo response. Connect your backend to get real AI responses!",
+    // Create new chat or add to existing
+    let chatId = currentChatId;
+    if (!chatId) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/api/chat/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: message.substring(0, 50),
+            messages: [userMessage],
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.chat) {
+            chatId = data.chat._id;
+            setCurrentChatId(chatId);
+            loadChatHistory();
+          }
+        }
+      } catch (error) {
+        console.error("Error creating chat:", error);
+      }
+    } else {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(`${API_URL}/api/chat/${chatId}/message`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(userMessage),
+        });
+      } catch (error) {
+        console.error("Error saving message:", error);
+      }
+    }
+
+    const typingMessage = {
+      text: "Typing...",
+      sender: "assistant",
+      isTyping: true,
+    };
+    setMessages((prev) => [...prev, typingMessage]);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${API_URL}/api/ai/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          message: message,
+          conversationHistory: messages.slice(-10),
+        }),
+      });
+
+      const data = await response.json();
+
+      setMessages((prev) => prev.filter((msg) => !msg.isTyping));
+
+      if (data.success) {
+        const aiResponse = {
+          text: data.response,
+          sender: "assistant",
+        };
+        setMessages((prev) => [...prev, aiResponse]);
+
+        // Save AI response
+        if (chatId) {
+          try {
+            const token = localStorage.getItem("token");
+            await fetch(`${API_URL}/api/chat/${chatId}/message`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(aiResponse),
+            });
+            loadChatHistory();
+          } catch (error) {
+            console.error("Error saving AI response:", error);
+          }
+        }
+      } else {
+        const errorResponse = {
+          text: "Sorry, I couldn't process that. Please try again.",
+          sender: "assistant",
+        };
+        setMessages((prev) => [...prev, errorResponse]);
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+
+      setMessages((prev) => prev.filter((msg) => !msg.isTyping));
+
+      const errorResponse = {
+        text: "Sorry, something went wrong. Please try again.",
         sender: "assistant",
       };
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+      setMessages((prev) => [...prev, errorResponse]);
+    }
   };
 
   const useSuggestion = (prompt) => {
     setInputValue(prompt);
-    messageInputRef.current?.focus();
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
   };
 
   const createNewChat = () => {
     setMessages([]);
     setShowEmptyState(true);
+    setCurrentChatId(null);
     setSidebarOpen(false);
   };
 
@@ -143,6 +418,8 @@ const MAKBot = () => {
     setShowDropdown(false);
     setMessages([]);
     setShowEmptyState(true);
+    setChatHistory([]);
+    setCurrentChatId(null);
     window.dispatchEvent(new Event("auth-change"));
   };
 
@@ -177,6 +454,11 @@ const MAKBot = () => {
     setShowSignUp(true);
   };
 
+  const handleShareChat = (chatId) => {
+    setShareConversationId(chatId);
+    setShowShareModal(true);
+  };
+
   return (
     <div style={styles.appContainer}>
       {showSignUp && (
@@ -192,6 +474,13 @@ const MAKBot = () => {
           onClose={() => setShowLogin(false)}
           onLoginSuccess={handleLoginSuccess}
           onSwitchToSignup={switchToSignup}
+        />
+      )}
+
+      {showShareModal && (
+        <ShareModal
+          conversationId={shareConversationId}
+          onClose={() => setShowShareModal(false)}
         />
       )}
 
@@ -232,9 +521,101 @@ const MAKBot = () => {
 
         <div style={styles.conversations}>
           {user ? (
-            <div style={styles.loginPrompt}>
-              <p>No conversations yet. Start chatting!</p>
-            </div>
+            loadingHistory ? (
+              <div style={styles.loginPrompt}>
+                <p>Loading chats...</p>
+              </div>
+            ) : chatHistory && chatHistory.length > 0 ? (
+              <div style={styles.chatSection}>
+                <div style={styles.chatSectionTitle}>Recent Chats</div>
+                {chatHistory.map((chat) => (
+                  <div
+                    key={chat._id || Math.random()}
+                    className="chatItem"
+                    style={{
+                      ...styles.chatItem,
+                      ...(currentChatId === chat._id
+                        ? styles.chatItemActive
+                        : {}),
+                    }}
+                    onClick={() => loadChat(chat._id)}
+                  >
+                    <svg
+                      style={styles.chatIcon}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                      />
+                    </svg>
+                    <div style={styles.chatItemContent}>
+                      <div style={styles.chatItemTitle}>
+                        {chat.title || "Untitled Chat"}
+                      </div>
+                      <div style={styles.chatItemTime}>
+                        {chat.updatedAt
+                          ? formatChatTime(chat.updatedAt)
+                          : "Recently"}
+                      </div>
+                    </div>
+                    <div style={styles.chatActions} className="chatActions">
+                      <button
+                        className="shareBtn"
+                        style={styles.shareBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareChat(chat._id);
+                        }}
+                        title="Share chat"
+                      >
+                        <svg
+                          style={styles.actionBtnSvg}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className="deleteBtn"
+                        style={styles.deleteBtn}
+                        onClick={(e) => deleteChat(chat._id, e)}
+                        title="Delete chat"
+                      >
+                        <svg
+                          style={styles.deleteBtnSvg}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={styles.loginPrompt}>
+                <p>No conversations yet. Start chatting!</p>
+              </div>
+            )
           ) : (
             <div style={styles.loginPrompt}>
               <p>Sign in to save your conversations</p>
@@ -266,7 +647,10 @@ const MAKBot = () => {
               </svg>
             </button>
             <h1 style={styles.chatTitle} className="chat-title">
-              New Chat
+              {(currentChatId &&
+                chatHistory &&
+                chatHistory.find((c) => c._id === currentChatId)?.title) ||
+                "New Chat"}
             </h1>
           </div>
 
@@ -280,7 +664,7 @@ const MAKBot = () => {
                   {user.profilePicture ? (
                     <img
                       src={user.profilePicture}
-                      alt={user.name}
+                      alt={user.name || "User"}
                       style={styles.profileImage}
                     />
                   ) : (
@@ -289,7 +673,7 @@ const MAKBot = () => {
                     </div>
                   )}
                   <span style={styles.userName} className="user-name-text">
-                    {user.name}
+                    {user.name || "User"}
                   </span>
                   <svg
                     style={styles.chevronIcon}
@@ -309,8 +693,10 @@ const MAKBot = () => {
                 {showDropdown && (
                   <div style={styles.dropdown}>
                     <div style={styles.dropdownHeader}>
-                      <div style={styles.dropdownName}>{user.name}</div>
-                      <div style={styles.dropdownEmail}>{user.email}</div>
+                      <div style={styles.dropdownName}>
+                        {user.name || "User"}
+                      </div>
+                      <div style={styles.dropdownEmail}>{user.email || ""}</div>
                     </div>
                     <div style={styles.dropdownDivider}></div>
                     <a href="#" style={styles.dropdownItem}>
@@ -329,7 +715,10 @@ const MAKBot = () => {
                       </svg>
                       Profile
                     </a>
-                    <a href="#" style={styles.dropdownItem}>
+                    <Link
+                      to="/settings"
+                      style={{ ...styles.dropdownItem, textDecoration: "none" }}
+                    >
                       <svg
                         style={styles.dropdownIcon}
                         fill="none"
@@ -350,7 +739,7 @@ const MAKBot = () => {
                         />
                       </svg>
                       Settings
-                    </a>
+                    </Link>
                     <div style={styles.dropdownDivider}></div>
                     <button style={styles.logoutButton} onClick={handleLogout}>
                       <svg
@@ -548,9 +937,7 @@ const MAKBot = () => {
           }
         }
 
-        /* ============ MOBILE RESPONSIVE ============ */
         @media (max-width: 768px) {
-          /* Header adjustments */
           .chat-header {
             padding: 12px 16px !important;
           }
@@ -559,7 +946,6 @@ const MAKBot = () => {
             font-size: 18px !important;
           }
 
-          /* Auth buttons - smaller on tablets */
           .auth-buttons {
             gap: 8px !important;
           }
@@ -570,24 +956,20 @@ const MAKBot = () => {
             font-size: 13px !important;
           }
 
-          /* Hide user name in profile dropdown */
           .user-name-text {
             display: none !important;
           }
 
-          /* Suggestions - single column */
           .suggestions {
             grid-template-columns: 1fr !important;
             gap: 12px !important;
           }
 
-          /* Chat messages */
           .chat-messages {
             padding: 16px !important;
             gap: 16px !important;
           }
 
-          /* Input area */
           .chat-input-container {
             padding: 12px !important;
           }
@@ -604,7 +986,6 @@ const MAKBot = () => {
         }
 
         @media (max-width: 480px) {
-          /* Very small screens - only show Sign Up button */
           .login-btn {
             display: none !important;
           }
@@ -617,6 +998,23 @@ const MAKBot = () => {
           .chat-title {
             font-size: 16px !important;
           }
+        }
+
+        /* Chat item hover effects */
+        .chatItem:hover {
+          background: rgba(157, 123, 94, 0.05);
+        }
+        
+        .chatItem:hover .chatActions {
+          display: flex !important;
+        }
+        
+        .shareBtn:hover {
+          background: rgba(157, 123, 94, 0.1);
+        }
+        
+        .deleteBtn:hover {
+          background: rgba(204, 51, 51, 0.1);
         }
       `}</style>
     </div>
@@ -683,7 +1081,97 @@ const styles = {
   conversations: {
     flex: 1,
     overflowY: "auto",
+    padding: "8px 0",
+  },
+  chatSection: {
+    marginBottom: "20px",
+  },
+  chatSectionTitle: {
+    fontSize: "11px",
+    fontWeight: 600,
+    color: "#a39a8f",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
     padding: "8px 12px",
+    marginBottom: "4px",
+  },
+  chatItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "10px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    margin: "2px 8px",
+    position: "relative",
+    background: "transparent",
+  },
+  chatItemActive: {
+    background: "rgba(157, 123, 94, 0.1)",
+    borderLeft: "3px solid #9d7b5e",
+  },
+  chatIcon: {
+    width: "16px",
+    height: "16px",
+    color: "#6b6359",
+    flexShrink: 0,
+  },
+  chatItemContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  chatItemTitle: {
+    fontSize: "13px",
+    fontWeight: 500,
+    color: "#3d3731",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    marginBottom: "2px",
+  },
+  chatItemTime: {
+    fontSize: "11px",
+    color: "#a39a8f",
+  },
+  chatActions: {
+    display: "none",
+    alignItems: "center",
+    gap: "4px",
+  },
+  shareBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "4px",
+    borderRadius: "4px",
+    transition: "all 0.2s",
+    flexShrink: 0,
+  },
+  actionBtnSvg: {
+    width: "16px",
+    height: "16px",
+    color: "#6b6359",
+  },
+  deleteBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "4px",
+    borderRadius: "4px",
+    transition: "all 0.2s",
+    flexShrink: 0,
+  },
+  deleteBtnSvg: {
+    width: "16px",
+    height: "16px",
+    color: "#c33",
   },
   loginPrompt: {
     padding: "20px",
@@ -697,6 +1185,8 @@ const styles = {
     flexDirection: "column",
     background: "#f7f5f2",
     position: "relative",
+    height: "100vh", // Add this
+    overflow: "hidden", // Add this
   },
   chatHeader: {
     padding: "20px 32px",
@@ -711,6 +1201,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "16px",
+    flex: 1,
+    minWidth: 0,
   },
   authSection: {
     display: "flex",
@@ -897,6 +1389,9 @@ const styles = {
     fontSize: "24px",
     fontWeight: 600,
     letterSpacing: "-0.5px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   chatMessages: {
     flex: 1,
@@ -905,6 +1400,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "24px",
+    overflowX: "hidden", // Add this
   },
   emptyState: {
     flex: 1,
@@ -1035,6 +1531,9 @@ const styles = {
     padding: "24px 32px",
     borderTop: "1px solid rgba(61, 55, 49, 0.1)",
     background: "#fefdfb",
+    position: "sticky",
+    bottom: 0,
+    zIndex: 10,
   },
   chatInputWrapper: {
     maxWidth: "1000px",
