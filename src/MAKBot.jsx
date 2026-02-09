@@ -911,7 +911,7 @@ const MAKBot = () => {
         />
       )}
 
-      <style>{`
+     <style>{`
   @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap');
   
   * {
@@ -923,15 +923,21 @@ const MAKBot = () => {
   html, body {
     font-family: 'DM Sans', -apple-system, sans-serif;
     overflow: hidden;
-    height: 100%;
     position: fixed;
     width: 100%;
+    height: 100%;
     overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
   }
   
   #root {
-    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
+    height: 100%;
     overflow: hidden;
   }
   
@@ -947,8 +953,23 @@ const MAKBot = () => {
   }
 
   @media (max-width: 768px) {
+    html {
+      height: 100vh;
+      height: 100dvh;
+    }
+    
+    body {
+      height: 100vh;
+      height: 100dvh;
+    }
+    
+    #root {
+      height: 100vh !important;
+      height: 100dvh !important;
+    }
+
     .chat-header {
-      padding: 14px 16px !important;
+      padding: 12px 16px !important;
     }
 
     .chat-title {
@@ -972,22 +993,31 @@ const MAKBot = () => {
     .suggestions {
       grid-template-columns: 1fr !important;
       gap: 12px !important;
-      padding: 0 16px !important;
+      padding: 0 8px !important;
+      margin-top: 24px !important;
     }
 
     .chat-messages {
-      padding: 16px !important;
+      padding: 16px 12px 80px 12px !important;
       gap: 16px !important;
     }
 
     .chat-input-container {
       padding: 12px !important;
+      background: #fefdfb !important;
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      border-top: 1px solid rgba(61, 55, 49, 0.1) !important;
+      z-index: 100 !important;
     }
 
     .chat-input {
       padding: 12px 46px 12px 14px !important;
       font-size: 16px !important;
       min-height: 48px !important;
+      border-radius: 12px !important;
     }
 
     .sidebar-toggle {
