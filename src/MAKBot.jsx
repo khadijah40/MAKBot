@@ -912,111 +912,121 @@ const MAKBot = () => {
       )}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap');
-        
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body {
-          font-family: 'DM Sans', -apple-system, sans-serif;
-          overflow: hidden;
-          height: 100vh;
-        }
-        
-        @keyframes messageSlideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap');
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    overflow: hidden;
+    height: 100%;
+    position: fixed;
+    width: 100%;
+    overscroll-behavior: none;
+  }
+  
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  @keyframes messageSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-        @media (max-width: 768px) {
-          .chat-header {
-            padding: 12px 16px !important;
-          }
+  @media (max-width: 768px) {
+    .chat-header {
+      padding: 14px 16px !important;
+    }
 
-          .chat-title {
-            font-size: 18px !important;
-          }
+    .chat-title {
+      font-size: 18px !important;
+    }
 
-          .auth-buttons {
-            gap: 8px !important;
-          }
+    .auth-buttons {
+      gap: 8px !important;
+    }
 
-          .login-btn,
-          .signup-btn {
-            padding: 8px 16px !important;
-            font-size: 13px !important;
-          }
+    .login-btn,
+    .signup-btn {
+      padding: 8px 14px !important;
+      font-size: 13px !important;
+    }
 
-          .user-name-text {
-            display: none !important;
-          }
+    .user-name-text {
+      display: none !important;
+    }
 
-          .suggestions {
-            grid-template-columns: 1fr !important;
-            gap: 12px !important;
-          }
+    .suggestions {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+      padding: 0 16px !important;
+    }
 
-          .chat-messages {
-            padding: 16px !important;
-            gap: 16px !important;
-          }
+    .chat-messages {
+      padding: 16px !important;
+      gap: 16px !important;
+    }
 
-          .chat-input-container {
-            padding: 12px !important;
-          }
+    .chat-input-container {
+      padding: 12px !important;
+    }
 
-          .chat-input {
-            padding: 12px 48px 12px 16px !important;
-            font-size: 14px !important;
-          }
+    .chat-input {
+      padding: 12px 46px 12px 14px !important;
+      font-size: 16px !important;
+      min-height: 48px !important;
+    }
 
-          .sidebar-toggle {
-            width: 36px !important;
-            height: 36px !important;
-          }
-        }
+    .sidebar-toggle {
+      width: 36px !important;
+      height: 36px !important;
+    }
+  }
 
-        @media (max-width: 480px) {
-          .login-btn {
-            display: none !important;
-          }
+  @media (max-width: 480px) {
+    .login-btn {
+      display: none !important;
+    }
 
-          .signup-btn {
-            padding: 8px 20px !important;
-            font-size: 14px !important;
-          }
+    .signup-btn {
+      padding: 8px 16px !important;
+      font-size: 14px !important;
+    }
 
-          .chat-title {
-            font-size: 16px !important;
-          }
-        }
+    .chat-title {
+      font-size: 16px !important;
+    }
+  }
 
-        /* Chat item hover effects */
-        .chatItem:hover {
-          background: rgba(157, 123, 94, 0.05);
-        }
-        
-        .chatItem:hover .chatActions {
-          display: flex !important;
-        }
-        
-        .shareBtn:hover {
-          background: rgba(157, 123, 94, 0.1);
-        }
-        
-        .deleteBtn:hover {
-          background: rgba(204, 51, 51, 0.1);
-        }
-      `}</style>
+  .chatItem:hover {
+    background: rgba(157, 123, 94, 0.05);
+  }
+  
+  .chatItem:hover .chatActions {
+    display: flex !important;
+  }
+  
+  .shareBtn:hover {
+    background: rgba(157, 123, 94, 0.1);
+  }
+  
+  .deleteBtn:hover {
+    background: rgba(204, 51, 51, 0.1);
+  }
+`}</style>
     </div>
   );
 };
@@ -1025,8 +1035,12 @@ const styles = {
   appContainer: {
     display: "flex",
     height: "100vh",
-    height: "100dvh", // Better mobile support
-    position: "relative",
+    height: "100dvh",
+    position: "fixed", // Changed from "relative"
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     background: "#f7f5f2",
     color: "#3d3731",
     overflow: "hidden",
@@ -1189,6 +1203,7 @@ const styles = {
     position: "relative",
     height: "100%",
     overflow: "hidden",
+    width: "100%", // Add this line
   },
   chatHeader: {
     padding: "20px 32px",
@@ -1199,6 +1214,9 @@ const styles = {
     gap: "16px",
     justifyContent: "space-between",
     flexShrink: 0,
+    position: "sticky", // Add this
+    top: 0, // Add this
+    zIndex: 50, // Add this
   },
   chatHeaderLeft: {
     display: "flex",
@@ -1401,6 +1419,7 @@ const styles = {
     overflowY: "auto",
     overflowX: "hidden",
     padding: "32px",
+    paddingBottom: "20px", // Add this line
     display: "flex",
     flexDirection: "column",
     gap: "24px",
@@ -1536,6 +1555,9 @@ const styles = {
     borderTop: "1px solid rgba(61, 55, 49, 0.1)",
     background: "#fefdfb",
     flexShrink: 0,
+    position: "sticky", // Add this
+    bottom: 0, // Add this
+    zIndex: 50, // Add this
   },
   chatInputWrapper: {
     maxWidth: "1000px",
@@ -1545,26 +1567,27 @@ const styles = {
   },
   chatInput: {
     width: "100%",
-    padding: "16px 56px 16px 20px",
+    padding: "14px 50px 14px 16px", // Changed padding
     background: "#ebe8e3",
     border: "1px solid rgba(61, 55, 49, 0.1)",
-    borderRadius: "16px",
+    borderRadius: "12px", // Changed from 16px
     color: "#3d3731",
     fontSize: "16px",
     fontFamily: "inherit",
     resize: "none",
     outline: "none",
-    transition: "all 0.3s ease",
-    minHeight: "56px",
-    maxHeight: "200px",
+    transition: "none", // Changed from "all 0.3s ease"
+    minHeight: "52px", // Changed from 56px
+    maxHeight: "150px", // Changed from 200px
     boxSizing: "border-box",
+    touchAction: "manipulation", // Add this
   },
   sendButton: {
     position: "absolute",
-    right: "12px",
-    bottom: "12px",
-    width: "40px",
-    height: "40px",
+    right: "16px", // Changed from 12px
+    bottom: "16px", // Changed from 12px
+    width: "36px", // Changed from 40px
+    height: "36px", // Changed from 40px
     background: "linear-gradient(135deg, #9d7b5e, #7d6b5a)",
     border: "none",
     borderRadius: "10px",
@@ -1573,6 +1596,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     transition: "all 0.3s ease",
+    flexShrink: 0,
   },
   sendButtonSvg: {
     width: "20px",
