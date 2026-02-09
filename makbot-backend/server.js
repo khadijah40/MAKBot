@@ -27,7 +27,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   }),
@@ -36,25 +36,51 @@ app.use(
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
-app.use("/api/ai", require("./routes/ai"));
-app.use("/api/chat", require("./routes/chat"));
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/makbot", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+// MongoDB Connection with retry logic
+const connectDB = async () => {
+  try {
+    await mongoose.connect(
+      process.env.MONGODB_URI || "mongodb://localhost:27017/makbot",
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      },
+    );
+    console.log("✅ MongoDB Connected");
+  } catch (err) {
+    console.error("❌ MongoDB Connection Error:", err);
+    console.log("🔄 Retrying connection in 5 seconds...");
+    setTimeout(connectDB, 5000);
+  }
+};
+
+// Handle MongoDB connection events
+mongoose.connection.on("disconnected", () => {
+  console.log("⚠️ MongoDB disconnected. Attempting to reconnect...");
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("❌ MongoDB error:", err);
+});
+
+// Connect to MongoDB
+connectDB();
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/chat", require("./routes/chat"));
+app.use("/api/ai", require("./routes/ai"));
 
 // Health check route
 app.get("/", (req, res) => {
-  res.json({ message: "MAKBot API is running!" });
+  res.json({
+    message: "MAKBot API is running!",
+    mongodb:
+      mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+  });
 });
 
 const PORT = process.env.PORT || 5000;
