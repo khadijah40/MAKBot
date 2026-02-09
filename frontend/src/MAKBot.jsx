@@ -4,7 +4,7 @@ import Login from "./Login";
 import ShareModal from "./ShareModal";
 import { Link } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const MAKBot = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1185,6 +1185,8 @@ const styles = {
     flexDirection: "column",
     background: "#f7f5f2",
     position: "relative",
+    height: "100vh", // Add this
+    overflow: "hidden", // Add this
   },
   chatHeader: {
     padding: "20px 32px",
@@ -1398,6 +1400,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "24px",
+    overflowX: "hidden", // Add this
   },
   emptyState: {
     flex: 1,
@@ -1528,6 +1531,9 @@ const styles = {
     padding: "24px 32px",
     borderTop: "1px solid rgba(61, 55, 49, 0.1)",
     background: "#fefdfb",
+    position: "sticky",
+    bottom: 0,
+    zIndex: 10,
   },
   chatInputWrapper: {
     maxWidth: "1000px",
