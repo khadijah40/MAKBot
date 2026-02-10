@@ -412,15 +412,28 @@ const MAKBot = () => {
   };
 
   const handleLogout = () => {
+    console.log("🔴 LOGOUT STARTED");
+    console.log("Token before:", localStorage.getItem("token"));
+    console.log("User before:", localStorage.getItem("user"));
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
+    console.log("Token after:", localStorage.getItem("token"));
+    console.log("User after:", localStorage.getItem("user"));
+    console.log("User state before setUser(null):", user);
+
     setUser(null);
     setShowDropdown(false);
     setMessages([]);
     setShowEmptyState(true);
     setChatHistory([]);
     setCurrentChatId(null);
+
+    console.log("Dispatching auth-change event");
     window.dispatchEvent(new Event("auth-change"));
+
+    console.log("✅ LOGOUT COMPLETE");
   };
 
   const getInitials = (name) => {
@@ -911,7 +924,7 @@ const MAKBot = () => {
         />
       )}
 
-     <style>{`
+      <style>{`
   @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap');
   
   * {
@@ -1398,7 +1411,8 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 99,
+    zIndex: 98,
+    pointerEvents: "none",
   },
   sidebarToggle: {
     width: "40px",
