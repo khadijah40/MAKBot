@@ -38,17 +38,6 @@ The project was built to explore conversational AI concepts, practice full-stack
 
 ---
 
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | HTML, CSS, JavaScript |
-| Backend | Node.js, Express.js |
-| AI / Bot Logic | JavaScript (custom response engine) |
-| Deployment | Vercel |
-| Version Control | Git, GitHub |
-
----
 
 ## 🗂️ Project Structure
 
