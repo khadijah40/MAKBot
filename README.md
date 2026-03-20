@@ -13,9 +13,6 @@
 
 <br/>
 
-> MAKBot is a conversational AI chatbot with a dedicated frontend interface and a Node.js/Express backend. Designed for natural interaction, task guidance, and customizable responses — all powered by JavaScript.
-
-</div>
 
 ---
 
