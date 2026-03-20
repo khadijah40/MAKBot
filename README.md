@@ -19,25 +19,6 @@
 
 ---
 
-## 📋 Table of Contents
-
-- [About](#-about)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Frontend Setup](#frontend-setup)
-  - [Backend Setup](#backend-setup)
-- [How It Works](#-how-it-works)
-- [Available Scripts](#-available-scripts)
-- [Deployment](#-deployment)
-- [What I Learned](#-what-i-learned)
-- [Contributing](#-contributing)
-- [Author](#-author)
-
----
-
 ## 📖 About
 
 **MAKBot** is a full-stack chatbot application built entirely in JavaScript. It features a clean, interactive chat UI on the frontend and a Node.js/Express API on the backend that processes user messages and returns intelligent responses.
