@@ -24,19 +24,6 @@ The project was built to explore conversational AI concepts, practice full-stack
 
 ---
 
-## ✨ Features
-
-| Feature | Description |
-|---|---|
-| 💬 Conversational AI | Responds to user inputs in a natural, context-aware way |
-| ⚡ Real-Time Chat UI | Smooth, interactive chat interface with message history |
-| 🔧 Task Assistance | Helps users with guidance, questions, and simple task automation |
-| 🧩 Customizable Commands | Easily extendable with new response logic and commands |
-| 🌐 Cross-Platform | Works on all modern browsers and devices |
-| 🔗 REST API Backend | Clean Express API separating frontend and bot logic |
-| 🚀 Deployed on Vercel | Live and accessible at any time |
-
----
 
 ## 🚀 Getting Started
 
