@@ -114,16 +114,6 @@ For the frontend, you can deploy the `frontend/` folder as a separate static sit
 
 ---
 
-## 🧠 What I Learned
-
-- Building a **full-stack JavaScript application** end-to-end
-- Designing and consuming a **REST API** with Express.js
-- Handling **user input and dynamic responses** in a chat interface
-- Structuring a project with **separate frontend and backend** concerns
-- **Deploying** a Node.js application to Vercel
-
----
-
 ## 🤝 Contributing
 
 Contributions, ideas, and improvements are very welcome!
