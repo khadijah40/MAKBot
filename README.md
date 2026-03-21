@@ -38,32 +38,6 @@ The project was built to explore conversational AI concepts, practice full-stack
 
 ---
 
-
-## 🗂️ Project Structure
-
-```
-MAKBot/
-│
-├── frontend/                  # Client-side chat interface
-│   ├── index.html             # Main chat UI page
-│   ├── style.css              # Chat interface styling
-│   └── script.js              # Handles user input & API communication
-│
-├── makbot-backend/            # Node.js / Express API server
-│   ├── server.js              # App entry point and route setup
-│   ├── routes/                # API route definitions
-│   │   └── chat.js            # Chat endpoint handler
-│   ├── controllers/           # Bot logic and response processing
-│   │   └── botController.js
-│   └── package.json           # Backend dependencies
-│
-└── README.md
-```
-
-> **Note:** Folder contents are inferred from the project structure. Actual file names may vary slightly.
-
----
-
 ## 🚀 Getting Started
 
 ### Prerequisites
